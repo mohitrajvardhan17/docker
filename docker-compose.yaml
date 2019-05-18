@@ -1,0 +1,543 @@
+# ****************Reference****************
+# Compose and Docker compatibility matrix [https://docs.docker.com/compose/compose-file/#compose-and-docker-compatibility-matrix]
+# Configs configuration reference [https://docs.docker.com/compose/compose-file/#configs-configuration-reference]
+# Specifying duration [https://docs.docker.com/compose/compose-file/#specifying-durations]
+# The default init binary that is used is Tini[https://github.com/krallin/tini], and is installed in /usr/libexec/docker-init on the daemon host. You can configure the daemon to use a custom init binary through the init-path configuration option[https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file].
+# Container isolation technology [https://docs.docker.com/engine/reference/commandline/run/#specify-isolation-technology-for-container---isolation]
+# Volume configuration reference [https://docs.docker.com/compose/compose-file/#volume-configuration-reference]
+# Network configuration reference [https://docs.docker.com/compose/compose-file/#network-configuration-reference]
+# Secret configuration reference [https://docs.docker.com/compose/compose-file/#secrets-configuration-reference]
+# VOLUMES FOR SERVICES, SWARMS, AND STACK FILES [https://docs.docker.com/compose/compose-file/#volumes-for-services-swarms-and-stack-files]
+# Variable substitution [https://docs.docker.com/compose/compose-file/#variable-substitution]
+# Extension fields [https://docs.docker.com/compose/compose-file/#extension-fields]
+# ******************************************
+
+# ****************Learning*****************
+# ToDo: Your first docker-compose.yml File [https://docs.docker.com/get-started/part3/#your-first-docker-composeyml-file]
+# ToDo: Add a new service and redeploy [https://docs.docker.com/get-started/part5/#add-a-new-service-and-redeploy]
+# ToDo: Docker for Beginners lab [https://github.com/docker/labs/tree/master/beginner/]
+# ToDo: Deploying an app to a Swarm [https://github.com/docker/labs/blob/master/beginner/chapters/votingapp.md]
+# ToDo: Variable substitution [https://docs.docker.com/compose/compose-file/#variable-substitution]
+# ToDo: Understand how ARGS and FROM interact [https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact]
+# ToDo: Docker labels [https://docs.docker.com/engine/userguide/labels-custom-metadata/]
+# ToDo: byte value [https://docs.docker.com/compose/compose-file/#specifying-byte-values]
+# ToDo: multi-stage build docs [https://docs.docker.com/engine/userguide/eng-image/multistage-build/]
+# ToDo: config [https://docs.docker.com/engine/swarm/configs/]
+# Todo: permission-calculator [http://permissions-calculator.org/]
+# ToDo: Controlling startup order [https://docs.docker.com/compose/startup-order/]
+# ToDO: deploying a stack in swarm mode [https://docs.docker.com/engine/reference/commandline/stack_deploy/]
+# ToDo: Replicated and global services [https://docs.docker.com/engine/swarm/how-swarm-mode-works/services/#replicated-and-global-services]
+# ToDo: Resource configuration option [https://github.com/docker/compose/issues/4513]
+# ToDo: how to configure volumes for services, swarms, and docker-stack.yml files [https://docs.docker.com/compose/compose-file/#volumes-for-services-swarms-and-stack-files]
+# ToDO: HEALTHCHECK Dockerfile instruction [https://docs.docker.com/engine/reference/builder/#healthcheck]
+# ToDo: user-defined networks [https://docs.docker.com/engine/userguide/networking//#user-defined-networks]
+# ToDo: logging overview [https://docs.docker.com/engine/admin/logging/overview/]
+# ToDo: logging driver [https://docs.docker.com/engine/admin/logging/overview/]
+# ToDo: docker secret [https://docs.docker.com/engine/swarm/secrets/]
+# ToDo: dockerd [https://docs.docker.com/engine/reference/commandline/dockerd/#disable-user-namespace-for-a-container]
+# ToDo: Docker volumes [https://docs.docker.com/engine/admin/volumes/volumes/]
+# ToDo: Volume plugins [https://docs.docker.com/engine/extend/plugins_volume/]
+# ******************************************
+
+# **************Compose without Swarm***************
+# ToDo: Try this once
+version: "3.7"
+services:
+  # 1. build - [https://docs.docker.com/compose/compose-file/#build]
+  webapp1:
+    build:
+      # CONTEXT - [https://docs.docker.com/compose/compose-file/#context]
+      # Either a path to a directory containing a Dockerfile, or a url to a git repository.
+      # relative path is relative to the location of the Compose file.
+      # This directory is also the build context that is sent to the Docker daemon.
+      # Compose builds and tags it with a generated name, and uses that image thereafter.
+      context: ./dir
+      # DOCKERFILE - [https://docs.docker.com/compose/compose-file/#dockerfile]
+      # Compose uses an alternate file to build with. A build path must also be specified.
+      dockerfile: Dockerfile-alternate
+      # ARGS - [https://docs.docker.com/compose/compose-file/#args]
+      # Add build arguments, which are environment variables accessible only during the build process.
+      # Note: In your Dockerfile, if you specify ARG before the FROM instruction,
+      # ARG is not available in the build instructions under FROM.
+      # If you need an argument to be available in both places, also specify it under the FROM instruction.
+      args:
+        buildno: 1
+        # You can omit the value when specifying a build argument, in which case its value at build
+        # time is the value in the environment where Compose is running.
+        gitcommithash:
+    # Note: If you specify image as well as build, then Compose names the built image
+    # with the webapp and optional tag specified in image:
+    image: webapp:tag
+    # CACHE_FROM - [https://docs.docker.com/compose/compose-file/#cache_from]
+    # A list of images that the engine uses for cache resolution.
+    # Note: This option is new in v3.2
+    cache_from:
+      - alpine:latest
+      - corp/web_app:3.14
+    # LABELS - [https://docs.docker.com/compose/compose-file/#cache_from]
+    # Add metadata to the resulting image using Docker labels. You can use either an array or a dictionary.
+    # We recommend that you use reverse-DNS notation to prevent your labels from conflicting with those used by other software.
+    labels:
+      com.example.description: "Accounting webapp"
+      com.example.department: "Finance"
+      com.example.label-with-empty-value: ""
+    # SHM_SIZE - [https://docs.docker.com/compose/compose-file/#shm_size]
+    # Set the size of the /dev/shm partition for this build’s containers.
+    # Specify as an integer value representing the number of bytes or as a string expressing a byte value.
+    # Added in version 3.5 file format
+    shm_size: '2gb'
+    # TARGET - [https://docs.docker.com/compose/compose-file/#target]
+    # Build the specified stage as defined inside the Dockerfile. See the multi-stage build docs for details.
+    # Added in version 3.4 file format
+    target: prod
+  # 2. cap_add, cap_drop - [https://docs.docker.com/compose/compose-file/#cap_add-cap_drop]
+  # Add or drop container capabilities. See man 7 capabilities for a full list.
+  webapp2:
+    image: redis
+    cap_add:
+      - ALL
+    cap_drop:
+      - NET_ADMIN
+      - SYS_ADMIN
+  # 3. cgroup_parent - [https://docs.docker.com/compose/compose-file/#cgroup_parent]
+  # Specify an optional parent cgroup for the container.
+  webapp3:
+    image: redis
+    cgroup_parent: m-executor-abcd
+  # 6. container_name - [https://docs.docker.com/compose/compose-file/#container_name]
+  # Specify a custom container name, rather than a generated default name.
+  webapp6:
+    image: redis
+    container_name: my-redis-container
+  # 7. DEPENDS_ON - [https://docs.docker.com/compose/compose-file/#depends_on]
+  # Express dependency between services
+  webapp7:
+    build: .
+    depends_on:
+      - webapp1
+      - webapp2
+  # 18. DEVICES - [https://docs.docker.com/compose/compose-file/#devices]
+  # List of device mappings.
+  webapp9:
+    image: redis
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+  # 24. EXTERNAL_LINK - [https://docs.docker.com/compose/compose-file/#external_links]
+  # Link to containers started outside this docker-compose.yml or even outside of Compose,
+  # especially for containers that provide shared or common services. external_links follow semantics
+  # similar to the legacy option links when specifying both the container name and the link alias (CONTAINER:ALIAS).
+  #
+  # Note: If you’re using the version 2 or above file format, the externally-created containers must be connected to
+  # at least one of the same networks as the service that is linking to them. Links are a legacy option. We recommend using networks instead.
+  webapp17:
+    image: redis:alpine
+    external_links:
+      - redis_1
+      - project_db_1:mysql
+      - project_db_1:postgresql
+  # 18. NETWORK_MODE - [https://docs.docker.com/compose/compose-file/#network_mode]
+  # Network mode.
+  webapp24:
+    image: redis
+    network_mode: ["bridge"|"host"|"none"|"service:[service name]"|"container:[container name/id]"]
+#
+   # 33. RESTART - [https://docs.docker.com/compose/compose-file/#restart]
+   # no is the default restart policy, and it does not restart a container under any
+   # circumstance. When always is specified, the container always restarts. The
+   # on-failure policy restarts a container if the exit code indicates an on-failure error.
+   webapp26:
+     image: some-service
+     restart: ["no"|always|on-failure|unless-stopped]
+#
+   # 35. SECURITY_OPT - [https://docs.docker.com/compose/compose-file/#security_opt]
+   # Override the default labeling scheme for each container.
+   webapp27:
+     image: some-service
+     security_opt:
+       - label:user:USER
+       - label:role:ROLE
+
+   # 37. SYSCTLS - [https://docs.docker.com/compose/compose-file/#sysctls]
+   # Kernel parameters to set in the container. You can use either an array or a dictionary.
+   webapp28:
+     image: some-service
+     sysctls:
+       net.core.somaxconn: 1024
+       net.ipv4.tcp_syncookies: 0
+
+   # 38. TMPFS - [https://docs.docker.com/compose/compose-file/#tmpfs]
+   # Mount a temporary file system inside the container. Can be a single value or a list.
+   webapp29:
+     image: some-service
+     tmpfs:
+       - /run
+       - /tmp
+       - type: tmpfs
+           target: /app
+           tmpfs:
+             size: 1000
+   # 38. TMPFS - [https://docs.docker.com/compose/compose-file/#tmpfs]
+   # Disables the user namespace for this service, if Docker daemon is configured with
+   # user namespaces. See dockerd for more information.
+   webapp33:
+     image: some-service
+     userns_mode: "host"
+# **************************************************
+
+
+# ****************Compose with Swarm****************
+  # 4. COMMAND - [https://docs.docker.com/compose/compose-file/#command]
+  # Override the default command.
+  # The command can also be a list, in a manner similar to dockerfile:
+  webapp4:
+    image: redis
+    command: ["bundle", "exec", "thin", "-p", "3000"]
+  # 4. CONFIG - [https://docs.docker.com/compose/compose-file/#configs]
+  # Note: config definitions are only supported in version 3.3 and higher of the compose file format.
+  # You can grant a service access to multiple configs and you can mix long and short syntax.
+  # Defining a config does not imply granting a service access to it.
+  webapp5:
+    image: redis:latest
+    # Needs to be defined below.
+    configs:
+      # SOURCE -
+      # The name of the config as it exists in Docker
+      - source: my_config
+        # TARGET -
+        # The path and name of the file to be mounted in the service’s task containers.
+        # Defaults to /<source> if not specified.
+        target: /redis_config
+        # UID -
+        # The numeric UID that owns the mounted config file within in the service’s task containers.
+        # Both default to 0 on Linux if not specified. Not supported on Windows.
+        uid: '103'
+        # GID -
+        # The numeric GID that owns the mounted config file within in the service’s task containers.
+        # Both default to 0 on Linux if not specified. Not supported on Windows.
+        gid: '103'
+        # MODE -
+        # The permissions for the file that is mounted within the service’s task containers, in octal notation.
+        # For instance, 0444 represents world-readable. The default is 0444. Configs cannot be writable because they are
+        # mounted in a temporary filesystem, so if you set the writable bit, it is ignored. The executable bit can be set.
+        # If you aren’t familiar with UNIX file permission modes, you may find this permissions calculator useful.
+        mode: 0440
+  # 8. DEPLOY - [https://docs.docker.com/compose/compose-file/#deploy]
+  # Specify configuration related to the deployment and running of services.
+  # This only takes effect when deploying to a swarm with docker stack deploy,
+  # and is ignored by docker-compose up and docker-compose run.
+  webapp8:
+    image: redis:alpine
+    deploy:
+      # 11. MODE - [https://docs.docker.com/compose/compose-file/#mode]
+      # Either global (exactly one container per swarm node) or replicated (a specified number of containers).
+      # The default is replicated.
+      mode: [global|replicated]
+      # 15. REPLICAS - [https://docs.docker.com/compose/compose-file/#replicas]
+      # If the service is replicated (which is the default), specify the number of containers that should be running at any given time.
+      replicas: 6
+      # 9. ENDPOINT_MODE - [https://docs.docker.com/compose/compose-file/#endpoint_mode]
+      # Specify a service discovery method for external clients connecting to a swarm.
+      # Version 3.3 only.
+      endpoint_mode: [vip|dnsrr]
+      # 10. LABELS - [https://docs.docker.com/compose/compose-file/#labels-1]
+      # Specify labels for the service. These labels are only set on the service, and not on any containers for the service.
+      labels:
+        com.example.description: "This label will appear on the web service"
+      # 12. PLACEMENT - [https://docs.docker.com/compose/compose-file/#placement]
+      # Specify placement of constraints and preferences.
+      placement:
+        # 13. CONSTRAINTS - [https://docs.docker.com/engine/reference/commandline/service_create/#specify-service-constraints-constraint]
+        constraints:
+          - node.role == manager
+          - engine.labels.operatingsystem == ubuntu 14.04
+        # 14. PREFERENCES - [https://docs.docker.com/compose/compose-file/#placement]
+        preferences:
+          - spread: node.labels.zone
+      # 16. RESOURCES - [https://docs.docker.com/compose/compose-file/#resources]
+      # Configures resource constraints.
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
+      # 17. RESTART_POLICY - [https://docs.docker.com/compose/compose-file/#restart_policy]
+      # Configures resource constraints.
+      restart_policy:
+        condition: [on-failure|any|none]
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      # 17. ROLLBACK_POLICY - [https://docs.docker.com/compose/compose-file/#rollback_config]
+      # Configures how the service should be rollbacked in case of a failing update.
+      rollback_policy:
+        parallelism: 2
+        delay: 10s
+        failure_action: [continue|pause]
+        monitor: 10(ns|us|ms|s|m|h)
+        max_failure_ratio: 0
+        order: [start-first|stop-first]
+      # 17. UPDATE_POLICY - [https://docs.docker.com/compose/compose-file/#update_config]
+      # Configures how the service should be updated. Useful for configuring rolling updates.
+      update_policy:
+        parallelism: 2
+        delay: 10s
+        failure_action: [continue|pause]
+        monitor: 10(ns|us|ms|s|m|h)
+        max_failure_ratio: 0
+        order: [start-first|stop-first]
+  # 19. DEPENDS_ON - [https://docs.docker.com/compose/compose-file/#depends_on-1]
+  # Express dependency between services, Service dependencies cause the following behaviors:
+  webapp10:
+    image: redis:alpine
+    depends_on:
+      - webapp1
+      - webapp2
+  # 21. DNS - [https://docs.docker.com/compose/compose-file/#dns]
+  # Custom DNS servers. Can be a single value or a list.
+  webapp11:
+    image: redis:alpine
+    dns:
+      - 8.8.8.8
+      - 9.9.9.9
+  # 22. DNS_SEARCH - [https://docs.docker.com/compose/compose-file/#dns_search]
+  # Custom DNS search domains. Can be a single value or a list.
+  webapp12:
+    image: redis:alpine
+    dns_search:
+      - dc1.example.com
+      - dc2.example.com
+  # 23. ENTRYPOINT - [https://docs.docker.com/compose/compose-file/#entrypoint]
+  # Override the default entrypoint.
+  # Note: Setting entrypoint both overrides any default entrypoint set on the service’s image with
+  # the ENTRYPOINT Dockerfile instruction, and clears out any default command on the image - meaning
+  # that if there’s a CMD instruction in the Dockerfile, it is ignored.
+  webapp13:
+    image: redis:alpine
+    entrypoint:
+      - php
+      - -d
+      - zend_extension=/usr/local/lib/php/extensions/no-debug-non-zts-20100525/xdebug.so
+      - -d
+      - memory_limit=-1
+      - vendor/bin/phpunit
+  # 22. ENV_FILE - [https://docs.docker.com/compose/compose-file/#env_file]
+  # Add environment variables from a file. Can be a single value or a list.
+  webapp14:
+    image: redis:alpine
+    dns_search:
+      - dc1.example.com
+      - dc2.example.com
+  # 23. ENVIRONMENT - [https://docs.docker.com/compose/compose-file/#environment]
+  # Add environment variables. You can use either an array or a dictionary.
+  # Any boolean values; true, false, yes no, need to be enclosed in quotes to
+  # ensure they are not converted to True or False by the YML parser.
+  webapp15:
+    image: redis:alpine
+    environment:
+      RACK_ENV: development
+      SHOW: 'true'
+      # Environment variables with only a key are resolved to their values on the machine
+      #Compose is running on, which can be helpful for secret or host-specific values.
+      SESSION_SECRET:
+  # 22. EXPOSE - [https://docs.docker.com/compose/compose-file/#expose]
+  # Expose ports without publishing them to the host machine - they’ll only be accessible
+  # to linked services. Only the internal port can be specified.
+  webapp16:
+    image: redis:alpine
+    expose:
+      - "3000"
+      - "8000"
+  # 25. EXTRA_HOST - [https://docs.docker.com/compose/compose-file/#external_links]
+  # Add hostname mappings. Use the same values as the docker client --add-host parameter.
+  # An entry with the ip address and hostname is created in /etc/hosts inside containers for this service
+  webapp18:
+    image: redis:alpine
+    extra_hosts:
+      - "somehost:162.242.195.82"
+      - "otherhost:50.31.209.229"
+  # 26.  HEALTHCHECK - [https://docs.docker.com/compose/compose-file/#healthcheck]
+  # Configure a check that’s run to determine whether or not containers for this service are “healthy”.
+  # Note: start_period is only supported for v3.4 and higher of the compose file format.
+  webapp19:
+    image: redis:alpine
+    healthcheck:
+      disable: false
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  # 28. IMAGE - [https://docs.docker.com/compose/compose-file/#image]
+  # Specify the image to start the container from. Can either be a repository/tag or a partial image ID.
+  webapp20:
+    image: [redis|ubuntu:14.04|tutum/influxdb|example-registry.com:4000/postgresql|a4bc65fd]
+  # 28. INIT - [https://docs.docker.com/compose/compose-file/#init]
+  # Run an init inside the container that forwards signals and reaps processes. Set this option to true to enable this feature for the service.
+  webapp21:
+    web:
+      image: alpine:latest
+      init: true
+  # 29. LABELS - [https://docs.docker.com/compose/compose-file/#labels-2]
+  # Add metadata to containers using Docker labels. You can use either an array or a dictionary.
+  # It’s recommended that you use reverse-DNS notation to prevent your labels from conflicting with those used by other software.
+  webapp22:
+    web:
+      image: alpine:latest
+      labels:
+        com.example.description: "Accounting webapp"
+        com.example.department: "Finance"
+        com.example.label-with-empty-value: ""
+  # 29. LOGGING - [https://docs.docker.com/compose/compose-file/#logging]
+  # Logging configuration for the service.
+  webapp23:
+    image: some-service
+    logging:
+      driver: "json-file" #https://docs.docker.com/engine/admin/logging/overview/
+      options:
+        max-size: "200k"
+        max-file: "10"
+  # 30. NETWORKING - [https://docs.docker.com/compose/compose-file/#networks]
+  # Networks to join.
+  webapp32:
+    image: some-service
+    networks:
+      some-network:
+        # 31. IPV4_ADDRESS, IPV6_ADDRESS - [https://docs.docker.com/compose/compose-file/#ipv4_address-ipv6_address]
+        # Specify a static IP address for containers for this service when joining the network.
+        ipv4_address: 172.16.238.10
+        # ipv6_address not working with swarm
+        ipv6_address: 2001:3984:3989::10
+        # 30. ALIASES - [https://docs.docker.com/compose/compose-file/#aliases]
+        # Aliases (alternative hostnames) for this service on the network. Other containers
+        # on the same network can use either the service name or this alias to connect to one of the service’s containers.
+        aliases:
+          - alias1
+          - alias3
+      other-network:
+        aliases:
+          - alias2
+    # 31. PID - [https://docs.docker.com/compose/compose-file/#pid]
+    # Sets the PID mode to the host PID mode. This turns on sharing between
+    # container and the host operating system the PID address space.
+    # Containers launched with this flag can access and manipulate other
+    # containers in the bare-metal machine’s namespace and vice versa.
+  webapp24:
+    image: some-service
+    pid: "host"
+
+  # 32. PORT - [https://docs.docker.com/compose/compose-file/#ports]
+  # Expose ports.
+  #
+  # Note: The long syntax is new in v3.2
+  # Note: Port mapping is incompatible with network_mode: host
+  # Note: When mapping ports in the HOST:CONTAINER format, you may experience
+  # erroneous results when using a container port lower than 60, because YAML
+  # parses numbers in the format xx:yy as a base-60 value. For this reason,
+  # we recommend always explicitly specifying your port mappings as strings.
+  webapp25:
+    image: some-service
+    ports:
+      - target: 80
+        published: 8080
+        protocol: tcp
+        mode: host
+  # 34. SECRETS - [https://docs.docker.com/compose/compose-file/#secrets]
+  # Grant access to secrets on a per-service basis using the per-service secrets configuration.
+  # The short syntax variant only specifies the secret name. This grants the container access to
+  # the secret and mounts it at /run/secrets/<secret_name> within the container. The source name
+  # and destination mountpoint are both set to the secret name.
+  webapp30:
+    image: some-service
+    secrets:
+      - source: my_secret
+        target: redis_secret
+        uid: '103'
+        gid: '103'
+        mode: 0440
+  # 37. STOP_GRACE_PERIOD - [https://docs.docker.com/compose/compose-file/#stop_grace_period]
+  # Specify how long to wait when attempting to stop a container if it doesn’t
+  # handle SIGTERM (or whatever stop signal has been specified with stop_signal),
+  # before sending SIGKILL. Specified as a duration.
+  webapp26:
+    image: some-service
+    stop_grace_period: 1m30s #default = 10 seconds
+
+  # 37. STOP_SIGNAL - [https://docs.docker.com/compose/compose-file/#stop_signal]
+  # Sets an alternative signal to stop the container. By default stop uses SIGTERM.
+  # Setting an alternative signal using stop_signal causes stop to send that signal instead.
+  webapp27:
+    image: some-service
+    stop_signal: SIGUSR1 #default = SIGTERM
+  # 37. ULIMITS - [https://docs.docker.com/compose/compose-file/#ulimits]
+  # Override the default ulimits for a container. You can either specify a single
+  # limit as an integer or soft/hard limits as a mapping.
+  webapp31:
+    image: some-service
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+  # 37. VOLUMES - [https://docs.docker.com/compose/compose-file/#volumes]
+  # Mount host paths or named volumes, specified as sub-options to a service.
+  webapp34:
+    image: some-service
+    volumes:
+      - type: volume
+        source: mydata
+        target: /data
+        volume:
+          nocopy: true
+      - type: bind
+        source: ./static
+        target: /opt/app/static
+   # 37. domainname, hostname, ipc, mac_address, privileged, read_only,
+   # shm_size, stdin_open, tty, user, working_dir -
+   # [https://docs.docker.com/compose/compose-file/#domainname-hostname-ipc-mac_address-privileged-read_only-shm_size-stdin_open-tty-user-working_dir]
+   # Each of these is a single value, analogous to its docker run counterpart.
+   # Note that mac_address is a legacy option.
+   webapp34:
+     image: some-service
+     user: postgresql
+     working_dir: /code
+     domainname: foo.com
+     hostname: foo
+     ipc: host
+     mac_address: 02:42:ac:11:65:43
+     privileged: true
+     read_only: true
+     shm_size: 64M
+     stdin_open: true
+     tty: true
+
+# **************************************************
+# 29. LOGGING - [https://docs.docker.com/compose/compose-file/#logging]
+# Logging configuration for the service.
+logging:
+  driver: syslog
+  options:
+    syslog-address: "tcp://192.168.0.42:123"
+
+configs:
+  my_config:
+    file: ./my_config.txt
+  my_other_config:
+    # means that it has already been defined in Docker,
+    # either by running the docker secret create command
+    # or by another stack deployment.
+    external: true
+
+networks:
+ new:
+ legacy:
+
+secrets:
+ my_secret:
+   file: ./my_secret.txt
+ my_other_secret:
+   external: true
+
+volumes:
+ mydata:
