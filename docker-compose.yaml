@@ -541,3 +541,13 @@ secrets:
 
 volumes:
  mydata:
+ nfsdata:
+   driver: nfs
+   driver_opts:
+     share: "$(NFS_HOST):$(NFS_EXPORT)/nfsdata"
+ dbdata:
+   driver: local
+   driver_opts:
+     type: 'none'
+     o: 'bind'
+     device: '/srv/db-data'
